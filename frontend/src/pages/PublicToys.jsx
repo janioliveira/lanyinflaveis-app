@@ -75,7 +75,7 @@ export function PublicToyDetail() {
       };
       const { data } = await api.post("/reservations", payload);
       toast.success("Reserva criada! Vá ao seu portal para pagar.");
-      nav(`/portal/reserva/${data.id}`);
+      nav(`/portal`);
     } catch (e) { toast.error(formatApiError(e.response?.data?.detail)); }
     finally { setLoading(false); }
   }

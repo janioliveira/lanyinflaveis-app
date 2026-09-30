@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sparkles, LogOut, Copy, CheckCircle2, FileDown } from "lucide-react";
+import { Sparkles, LogOut, Copy, CheckCircle2, FileDown, QrCode } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
 import { printContract } from "@/lib/printPdf";
 import { toast } from "sonner";
@@ -140,17 +141,46 @@ function ReservationCard({ r, toys, onReload, contracts }) {
               <Button data-testid="do-pay" onClick={pay} className="w-full rounded-full bg-orange-500 hover:bg-orange-600">Gerar pagamento</Button>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {method === "pix" && (
-                <div className="bg-white p-4 rounded-xl border-2 border-orange-200 text-center">
-                  <div className="w-40 h-40 mx-auto bg-slate-800 rounded-xl flex items-center justify-center text-white text-xs p-2">QR Code Simulado<br/>{payment.transaction_id}</div>
-                  <div className="mt-3 text-xs text-slate-500">Código copia e cola:</div>
-                  <div className="bg-slate-50 rounded-lg p-2 text-xs font-mono break-all mt-1">{payment.pix_qr_code}</div>
-                  <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(payment.pix_qr_code); toast.success("Copiado!"); }} className="rounded-full mt-2 gap-1"><Copy className="w-3 h-3" />Copiar</Button>
+                <div className="bg-white p-5 rounded-2xl border-2 border-orange-200 text-center">
+                  <div className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-3 flex items-center justify-center gap-1"><QrCode className="w-3 h-3" />Pague com PIX</div>
+                  <div className="inline-block p-4 bg-white rounded-xl border shadow-sm">
+                    <QRCodeSVG
+                      data-testid="pix-qrcode"
+                      value={payment.pix_qr_code}
+                      size={200}
+                      level="M"
+                      includeMargin={false}
+                      fgColor="#0f172a"
+                      bgColor="#ffffff"
+                    />
+                  </div>
+                  <div className="text-xs text-slate-500 mt-3">1. Abra o app do seu banco<br/>2. Escolha PIX → Pagar com QR Code<br/>3. Aponte a câmera para o código acima</div>
+                  <div className="mt-4 text-left">
+                    <div className="text-xs font-bold text-slate-500 uppercase mb-1">Ou use PIX copia e cola:</div>
+                    <div data-testid="pix-code" className="bg-slate-50 rounded-lg p-3 text-xs font-mono break-all border">{payment.pix_qr_code}</div>
+                    <Button data-testid="pix-copy" size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(payment.pix_qr_code); toast.success("Código PIX copiado!"); }} className="rounded-full mt-2 w-full gap-2 border-orange-500 text-orange-600 hover:bg-orange-50">
+                      <Copy className="w-3 h-3" />Copiar código PIX
+                    </Button>
+                  </div>
+                  <div className="mt-4 text-xs text-slate-500 bg-orange-50 rounded-lg p-2">
+                    ⏱ Expira em {payment.pix_expires_at ? new Date(payment.pix_expires_at).toLocaleTimeString("pt-BR", {hour: "2-digit", minute: "2-digit"}) : "30 minutos"}
+                  </div>
                 </div>
               )}
-              <div className="text-xs text-slate-500 text-center">Ambiente de desenvolvimento: use o botão abaixo para simular a confirmação (em produção o gateway envia via webhook).</div>
-              <Button data-testid="sim-confirm" onClick={confirmPay} className="w-full rounded-full bg-green-600 hover:bg-green-700 gap-2"><CheckCircle2 className="w-4 h-4" />Simular pagamento confirmado</Button>
+              {method === "credit_card" && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900">
+                  💳 Em produção, aqui abrirá o checkout seguro do gateway (Mercado Pago/Stripe). No ambiente de desenvolvimento, use o botão abaixo para simular.
+                </div>
+              )}
+              {method === "cash" && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-900">
+                  💵 Pagamento em dinheiro será confirmado presencialmente pelo funcionário no dia do evento.
+                </div>
+              )}
+              <div className="text-xs text-slate-500 text-center border-t pt-3">Ambiente de desenvolvimento — em produção o gateway confirma automaticamente via webhook.</div>
+              <Button data-testid="sim-confirm" onClick={confirmPay} className="w-full rounded-full bg-green-600 hover:bg-green-700 gap-2 h-11"><CheckCircle2 className="w-4 h-4" />Já paguei — confirmar (MOCK)</Button>
             </div>
           )}
         </DialogContent>
