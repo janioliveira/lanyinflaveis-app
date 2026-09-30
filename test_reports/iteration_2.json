@@ -1,0 +1,38 @@
+{
+  "summary": "Iteration 2 full regression + PIX bug fix validation for Lany Infláveis. All backend endpoints (22/22 pytest) and frontend flows passing. PIX QR SVG now renders correctly with qrcode.react (12 rect/path elements, BR Code format, testid pix-qrcode present), copy-code button works, expiry & step instructions shown, and 'Já paguei — confirmar (MOCK)' updates reservation to 'confirmada'. Redirect after public catalog reservation goes to /portal (not the broken /portal/reserva/:id). Auth, RBAC (admin/employee/customer), Toys, Customers, Reservations (with 409 conflict), Quotes (Q<ts> + convert), Contracts (placeholders replaced + idempotent), Payments (PIX pix_qr_code + pix_expires_at + simulate-confirm), Webhook (payment.approved), Dashboard stats, Financial, Company, Notifications (auto-created with wa.me link) all verified.",
+  "tested_scope": ["backend", "frontend", "auth", "rbac", "integration", "bug_fix_pix"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "passed": [
+    "PIX QR code renders as real SVG (qrcode.react, 12 rect/path elements) — bug fix confirmed",
+    "pix-qrcode data-testid forwarded to SVG element",
+    "pix-code shows valid BR Code starting with 00020126360014BR.GOV.BCB.PIX",
+    "pix-copy button present and functional (copies to clipboard, toast shown)",
+    "'Expira em HH:MM' indicator present, e.g., 'Expira em 17:16'",
+    "Step-by-step instructions rendered (Abra o app do banco → PIX → Aponte câmera)",
+    "sim-confirm button confirms payment; reservation transitions to 'confirmada'",
+    "Public catalog reservation redirects to /portal (bug fix; no more /portal/reserva/:id 404)",
+    "Backend pytest suite: 22 tests all passed on second run (see junit XML)",
+    "Notifications auto-created with wa.me link on new reservation (verified in /app/notificacoes UI + API)",
+    "Admin sidebar has all 12 modules; Dashboard, Agenda, Financeiro pages render without errors",
+    "WhatsApp float button on public home links to wa.me/5511999998888"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_full_regression.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is 908 lines — consider splitting into routers (auth/reservations/payments/notifications) for maintainability, though not blocking.",
+    "notify_reservation() (server.py L30-86) uses ObjectId lookup on customer_id but the same field may hold a users.id when reservation created by customer — currently handled via fallback but silent Exception swallowing could hide real errors. Consider explicit logging."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_full_regression.py (new pytest regression suite)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "Admin: admin@lanyinflaveis.com / Admin@123 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Tests create TEST_-prefixed customers/reservations/financial entries. No cleanup performed (data harmless in dev). Notifications collection accumulated new entries.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "PIX flow works end-to-end in browser. If you want to re-test PIX, use the customer registration flow → catalog → reserve → portal Pagar agora → PIX default → do-pay → verify pix-qrcode SVG. Backend regression suite at /app/backend/tests/test_full_regression.py can be re-run with: cd /app && pytest backend/tests/test_full_regression.py -v. Test dates are randomized (2030-2050) to avoid conflict with prior runs."
+}
