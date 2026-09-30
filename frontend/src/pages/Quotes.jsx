@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { formatApiError } from "@/lib/api";
+import { printQuote } from "@/lib/printPdf";
 
 const empty = { customer_id: "", toy_ids: [], start_datetime: "", end_datetime: "", endereco_evento: "", valor_brinquedos: 0, servicos_adicionais: 0, taxa_deslocamento: 0, desconto: 0, valor_total: 0, status: "rascunho", observacoes: "" };
 
@@ -16,12 +17,13 @@ export default function Quotes() {
   const [items, setItems] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [toys, setToys] = useState([]);
+  const [company, setCompany] = useState({});
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(empty);
 
   async function load() {
-    const [q, c, t] = await Promise.all([api.get("/quotes"), api.get("/customers"), api.get("/toys")]);
-    setItems(q.data); setCustomers(c.data); setToys(t.data);
+    const [q, c, t, co] = await Promise.all([api.get("/quotes"), api.get("/customers"), api.get("/toys"), api.get("/company")]);
+    setItems(q.data); setCustomers(c.data); setToys(t.data); setCompany(co.data || {});
   }
   useEffect(() => { load(); }, []);
 
@@ -59,7 +61,10 @@ export default function Quotes() {
                   <td className="p-4 font-semibold">{c?.nome}</td>
                   <td className="p-4">R$ {q.valor_total?.toFixed(2)}</td>
                   <td className="p-4"><span className="text-xs px-2 py-1 rounded-full bg-pink-100 text-pink-700 font-semibold">{q.status}</span></td>
-                  <td className="p-4 text-right">{q.status !== "convertido" && <Button data-testid={`q-conv-${q.id}`} size="sm" onClick={() => convert(q.id)} className="rounded-full bg-orange-500 hover:bg-orange-600">Converter</Button>}</td>
+                  <td className="p-4 text-right space-x-1">
+                    <Button data-testid={`q-pdf-${q.id}`} size="sm" variant="outline" onClick={() => printQuote({ quote: q, customer: customers.find(x => x.id === q.customer_id), toys, company })} className="rounded-full gap-1"><FileDown className="w-3 h-3" />PDF</Button>
+                    {q.status !== "convertido" && <Button data-testid={`q-conv-${q.id}`} size="sm" onClick={() => convert(q.id)} className="rounded-full bg-orange-500 hover:bg-orange-600">Converter</Button>}
+                  </td>
                 </tr>
               );
             })}

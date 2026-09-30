@@ -2,22 +2,22 @@ import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { formatApiError } from "@/lib/api";
+import { printContract } from "@/lib/printPdf";
 
 export default function Contracts() {
   const [items, setItems] = useState([]);
+  const [company, setCompany] = useState({});
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState(null);
 
-  async function load() { const { data } = await api.get("/contracts"); setItems(data); }
-  useEffect(() => { load(); }, []);
-
-  function printContract(c) {
-    const w = window.open("", "_blank");
-    w.document.write(`<html><head><title>Contrato</title><style>body{font-family:sans-serif;padding:40px;white-space:pre-wrap;max-width:800px;margin:auto}</style></head><body>${c.content.replace(/</g, "&lt;")}</body></html>`);
-    w.print();
+  async function load() {
+    const [c, co] = await Promise.all([api.get("/contracts"), api.get("/company")]);
+    setItems(c.data); setCompany(co.data || {});
   }
+  useEffect(() => { load(); }, []);
 
   return (
     <div className="space-y-6">
@@ -33,7 +33,7 @@ export default function Contracts() {
                 <td className="p-4">{new Date(c.created_at).toLocaleDateString("pt-BR")}</td>
                 <td className="p-4 text-right flex gap-2 justify-end">
                   <Button data-testid={`ct-view-${c.id}`} size="sm" variant="outline" onClick={() => { setCurrent(c); setOpen(true); }}>Visualizar</Button>
-                  <Button size="sm" variant="outline" onClick={() => printContract(c)}>PDF</Button>
+                  <Button data-testid={`ct-pdf-${c.id}`} size="sm" variant="outline" onClick={() => printContract({ contract: c, company })} className="gap-1"><FileDown className="w-3 h-3" />PDF</Button>
                 </td>
               </tr>
             ))}

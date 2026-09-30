@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sparkles, LogOut, Copy, CheckCircle2 } from "lucide-react";
+import { Sparkles, LogOut, Copy, CheckCircle2, FileDown } from "lucide-react";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
+import { printContract } from "@/lib/printPdf";
 import { toast } from "sonner";
 import { formatApiError } from "@/lib/api";
 
@@ -160,6 +161,9 @@ function ReservationCard({ r, toys, onReload, contracts }) {
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="font-heading text-2xl text-[#004E98]">Contrato de locação</DialogTitle></DialogHeader>
           {contract && <pre className="text-xs whitespace-pre-wrap font-mono bg-slate-50 p-4 rounded-xl max-h-96 overflow-y-auto">{contract.content}</pre>}
+          {contract && (
+            <Button data-testid="ct-pdf-portal" variant="outline" onClick={() => printContract({ contract, company: {} })} className="w-full rounded-full gap-2 mt-2"><FileDown className="w-4 h-4" />Baixar PDF</Button>
+          )}
           {contract?.status !== "assinado" ? (
             <div className="space-y-3 mt-4">
               <Input data-testid="sign-name" placeholder="Nome completo" value={signName} onChange={e => setSignName(e.target.value)} />

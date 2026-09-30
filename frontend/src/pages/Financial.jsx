@@ -6,16 +6,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { formatApiError } from "@/lib/api";
+import { printFinancial } from "@/lib/printPdf";
 
 export default function Financial() {
   const [items, setItems] = useState([]);
+  const [company, setCompany] = useState({});
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ tipo: "entrada", categoria: "", valor: 0, descricao: "", data: new Date().toISOString() });
 
-  async function load() { const { data } = await api.get("/financial"); setItems(data); }
+  async function load() {
+    const [f, c] = await Promise.all([api.get("/financial"), api.get("/company")]);
+    setItems(f.data); setCompany(c.data || {});
+  }
   useEffect(() => { load(); }, []);
 
   const totalIn = items.filter(i => i.tipo === "entrada").reduce((s, i) => s + (i.valor || 0), 0);
@@ -30,7 +35,10 @@ export default function Financial() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="font-heading text-3xl text-[#004E98]">Financeiro</h1><p className="text-slate-500 text-sm">Entradas e saídas.</p></div>
-        <Button data-testid="fin-new" onClick={() => setOpen(true)} className="rounded-full bg-orange-500 hover:bg-orange-600 gap-2"><Plus className="w-4 h-4" />Novo lançamento</Button>
+        <div className="flex gap-2">
+          <Button data-testid="fin-pdf" onClick={() => printFinancial({ entries: items, company })} variant="outline" className="rounded-full gap-2"><FileDown className="w-4 h-4" />PDF</Button>
+          <Button data-testid="fin-new" onClick={() => setOpen(true)} className="rounded-full bg-orange-500 hover:bg-orange-600 gap-2"><Plus className="w-4 h-4" />Novo lançamento</Button>
+        </div>
       </div>
       <div className="grid md:grid-cols-3 gap-4">
         <Card label="Entradas" value={totalIn} color="green" />
