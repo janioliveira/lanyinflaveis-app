@@ -23,6 +23,67 @@ from auth import (
     get_token_from_request, get_current_user_from_db,
 )
 from seed import seed_all
+from whatsapp import build_wa_link, render_message, TEMPLATES, dispatch as wa_dispatch
+
+
+async def create_notification(db, kind: str, reservation_id: str, extra: dict = None):
+    """Create a WhatsApp notification for a reservation event."""
+    try:
+        reserva = await db.reservations.find_one({"_id": ObjectId(reservation_id)})
+        if not reserva:
+            return
+        # Resolve customer + phone
+        phone, name = "", ""
+        try:
+            cust = await db.customers.find_one({"_id": ObjectId(reserva["customer_id"])})
+            if cust:
+                phone = cust.get("whatsapp") or cust.get("telefone") or ""
+                name = cust.get("nome", "")
+        except Exception:
+            pass
+        if not name:
+            try:
+                u = await db.users.find_one({"_id": ObjectId(reserva["customer_id"])})
+                if u:
+                    name = u.get("name", "")
+            except Exception:
+                pass
+        toys_names = []
+        for tid in reserva.get("toy_ids", []):
+            try:
+                t = await db.toys.find_one({"_id": ObjectId(tid)})
+                if t: toys_names.append(t["nome"])
+            except Exception:
+                pass
+        frontend = os.environ.get("FRONTEND_URL", "")
+        ctx = {
+            "NOME": name or "cliente",
+            "NUMERO": reserva.get("numero", ""),
+            "DATA_EVENTO": reserva["start_datetime"][:10],
+            "HORARIO": reserva["start_datetime"][11:16],
+            "BRINQUEDOS": ", ".join(toys_names) or "—",
+            "VALOR": f"{reserva.get('valor_total', 0):.2f}",
+            "LOCAL": reserva.get("endereco_evento", ""),
+            "LINK": f"{frontend}/portal",
+        }
+        if extra: ctx.update(extra)
+        template = TEMPLATES.get(kind, "")
+        message = render_message(template, ctx)
+        result = await wa_dispatch(phone, message)
+        await db.notifications.insert_one({
+            "kind": kind,
+            "reservation_id": reservation_id,
+            "customer_id": reserva.get("customer_id"),
+            "customer_name": name,
+            "phone": phone,
+            "message": message,
+            "wa_link": result.get("wa_link", ""),
+            "provider": result.get("provider", "manual"),
+            "status": result.get("status", "pending"),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+    except Exception as e:
+        logger.error(f"Notification error: {e}")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -298,6 +359,7 @@ async def create_reservation(payload: ReservationIn, user: dict = Depends(get_cu
     doc["numero"] = f"R{int(datetime.now().timestamp())}"
     res = await db.reservations.insert_one(doc)
     saved = await db.reservations.find_one({"_id": res.inserted_id})
+    await create_notification(db, "new_reservation", str(res.inserted_id))
     return clean_doc(saved)
 
 
@@ -485,7 +547,52 @@ async def simulate_payment_confirm(pid: str, user: dict = Depends(get_current_us
         "payment_id": pid,
         "data": datetime.now(timezone.utc).isoformat(),
     })
+    await create_notification(db, "payment_confirmed", payment["reservation_id"], {"VALOR": f"{payment['amount']:.2f}"})
     return {"ok": True}
+
+
+# ─────────────────────── NOTIFICATIONS (WhatsApp) ───────────────────────
+@api.get("/notifications")
+async def list_notifications(status: Optional[str] = None, user: dict = Depends(require_staff)):
+    filt: dict = {}
+    if status:
+        filt["status"] = status
+    docs = await db.notifications.find(filt).sort("created_at", -1).to_list(500)
+    return [clean_doc(d) for d in docs]
+
+
+@api.post("/notifications/{nid}/mark-sent")
+async def mark_sent(nid: str, user: dict = Depends(require_staff)):
+    await db.notifications.update_one(
+        {"_id": ObjectId(nid)},
+        {"$set": {"status": "sent", "sent_at": datetime.now(timezone.utc).isoformat(), "sent_by": user["id"]}},
+    )
+    return {"ok": True}
+
+
+@api.post("/notifications/reminders/generate")
+async def generate_event_reminders(user: dict = Depends(require_staff)):
+    """Generate 24h-before-event reminders for confirmed reservations happening tomorrow."""
+    now = datetime.now(timezone.utc)
+    start = (now + timedelta(hours=20)).isoformat()
+    end = (now + timedelta(hours=28)).isoformat()
+    created = 0
+    async for r in db.reservations.find({
+        "status": {"$in": ["confirmada", "pre_reservada"]},
+        "start_datetime": {"$gte": start, "$lte": end},
+    }):
+        rid = str(r["_id"])
+        # Skip if already sent today
+        exists = await db.notifications.find_one({
+            "kind": "event_reminder",
+            "reservation_id": rid,
+            "created_at": {"$gte": now.replace(hour=0, minute=0).isoformat()},
+        })
+        if exists:
+            continue
+        await create_notification(db, "event_reminder", rid)
+        created += 1
+    return {"created": created}
 
 
 @api.post("/webhooks/payment")

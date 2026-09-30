@@ -21,6 +21,7 @@ import Payments from "@/pages/Payments";
 import Financial from "@/pages/Financial";
 import Company from "@/pages/Company";
 import Users from "@/pages/Users";
+import Notifications from "@/pages/Notifications";
 
 function RequireAuth({ children, roles }) {
   const { user, ready } = useAuth();
@@ -54,6 +55,7 @@ function App() {
             <Route path="contratos" element={<Contracts />} />
             <Route path="pagamentos" element={<Payments />} />
             <Route path="financeiro" element={<Financial />} />
+            <Route path="notificacoes" element={<Notifications />} />
             <Route path="empresa" element={<Company />} />
             <Route path="usuarios" element={<Users />} />
           </Route>

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Star, Ruler, Users, Calendar } from "lucide-react";
+import WhatsAppFloat from "@/components/WhatsAppFloat";
 
 export default function PublicHome() {
   const [toys, setToys] = useState([]);
@@ -97,6 +98,7 @@ export default function PublicHome() {
       <footer className="mt-24 border-t border-orange-100 py-8 text-center text-sm text-slate-500">
         © {new Date().getFullYear()} Lany Infláveis · <a href="https://instagram.com/lanyinflaveis" className="text-orange-600 font-semibold">@lanyinflaveis</a>
       </footer>
+      <WhatsAppFloat message="Olá! Vi seu site e gostaria de mais informações sobre os brinquedos." />
     </div>
   );
 }

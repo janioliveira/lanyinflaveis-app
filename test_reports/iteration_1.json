@@ -1,0 +1,33 @@
+{
+  "summary": "First-finish smoke test for Lany Infláveis MVP. Backend and frontend core flows validated against public URL. All critical endpoints and admin UI working. Reservation payload requires `toy_ids`, `start_datetime`, `end_datetime`, `endereco_evento` (not `items`/`horario_inicio` as in review request — confirmed with server code and frontend uses correct schema).",
+  "tested_scope": ["backend", "frontend", "auth", "integration"],
+  "passed": [
+    "GET /api/toys?public=true returns 3 seeded toys (Cama Elástica 4m, Futebol de Sabão, Tobogã Inflável Gigante) without auth",
+    "POST /api/auth/login admin@lanyinflaveis.com/Admin@123 returns 200, sets httpOnly cookies; GET /api/auth/me works with cookie",
+    "POST /api/auth/register forces role=customer even when payload sends role=admin (self-registration safe)",
+    "RBAC: employee gets 403 on POST /api/toys; customer gets 403 on /api/users, /api/financial, PUT /api/company",
+    "POST /api/customers (admin) creates customer",
+    "POST /api/reservations creates reservation; overlapping reservation for same toy correctly returns 409 with message 'Brinquedo X indisponível no período'",
+    "GET /api/availability?toy_id&start&end returns {available: true}",
+    "POST /api/quotes creates quote with numero=Q<timestamp>; POST /api/quotes/{id}/convert converts to reservation",
+    "POST /api/payments method=pix returns payment with pix_qr_code and pix_expires_at",
+    "POST /api/payments/{id}/simulate-confirm returns {ok:true}, marks payment paid, creates financial entry, and updates reservation.status='confirmada' (verified via GET /api/reservations/{id})",
+    "POST /api/reservations/{rid}/contract generates contract with placeholders replaced (nome, data, horário, brinquedo); second call returns same contract id (idempotent)",
+    "POST /api/webhooks/payment with event=payment.approved + transaction_id returns {received:true}",
+    "GET /api/dashboard/stats returns reservas_hoje, brinquedos_ativos, faturamento_mes, top_brinquedos, faturamento_por_mes",
+    "GET /api/company returns Lany Infláveis data; GET /api/financial lists entries",
+    "Frontend: Home / loads with hero 'Diversão que infla sorrisos', navigation (Brinquedos/Entrar/Reservar) and catalog",
+    "Frontend: /login authenticates admin and redirects to /app with 'Bem-vindo, Administrador Lany!' toast; sidebar shows Dashboard/Agenda/Reservas/Orçamentos/Clientes/Brinquedos/Contratos/Pagamentos/Financeiro/Usuários/Empresa; KPI cards and charts render correctly (R$300, 2 reservas no mês, 3 brinquedos ativos)"
+  ],
+  "failed": [],
+  "action_items": [
+    "Note (informational, not a bug): The review request described reservation payload as {items:[{toy_id,quantidade,preco_unitario}], horario_inicio, horario_fim, local_evento}, but the actual server schema is {toy_ids:[...], start_datetime, end_datetime, endereco_evento, valor_total}. Frontend uses the correct schema; the description in review_request was inaccurate."
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true,
+  "mocked_apis_verified": [
+    "POST /api/payments (PIX QR simulated locally — pix_qr_code returned)",
+    "POST /api/payments/{id}/simulate-confirm (dev-only mock gateway callback — works)"
+  ]
+}

@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { LayoutDashboard, Calendar, Package, Users, FileText, CreditCard, Wallet, Settings, UserCog, ClipboardList, LogOut, Sparkles, Menu, X } from "lucide-react";
+import { LayoutDashboard, Calendar, Package, Users, FileText, CreditCard, Wallet, Settings, UserCog, ClipboardList, LogOut, Sparkles, Menu, X, Bell } from "lucide-react";
 import { useState } from "react";
 
 const navAdmin = [
@@ -13,6 +13,7 @@ const navAdmin = [
   { to: "/app/contratos", icon: FileText, label: "Contratos" },
   { to: "/app/pagamentos", icon: CreditCard, label: "Pagamentos" },
   { to: "/app/financeiro", icon: Wallet, label: "Financeiro" },
+  { to: "/app/notificacoes", icon: Bell, label: "Notificações" },
   { to: "/app/usuarios", icon: UserCog, label: "Usuários" },
   { to: "/app/empresa", icon: Settings, label: "Empresa" },
 ];

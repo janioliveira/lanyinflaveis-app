@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Ruler, Users, Zap, Clock, ArrowLeft, Sparkles } from "lucide-react";
+import WhatsAppFloat from "@/components/WhatsAppFloat";
 import { toast } from "sonner";
 import { formatApiError } from "@/lib/api";
 
@@ -32,6 +33,7 @@ export function PublicCatalog() {
           ))}
         </div>
       </div>
+      <WhatsAppFloat message="Olá! Quero saber mais sobre os brinquedos do catálogo." />
     </div>
   );
 }
