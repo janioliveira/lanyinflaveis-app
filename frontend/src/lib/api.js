@@ -1,6 +1,9 @@
 import axios from "axios";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+// Vercel deploys frontend + API on the same origin → leave REACT_APP_BACKEND_URL
+// empty and we hit /api relative paths. For split hosting (dev/preview with
+// backend on another domain) set REACT_APP_BACKEND_URL to the API origin.
+const BACKEND_URL = (process.env.REACT_APP_BACKEND_URL || "").replace(/\/$/, "");
 export const API = `${BACKEND_URL}/api`;
 
 const api = axios.create({

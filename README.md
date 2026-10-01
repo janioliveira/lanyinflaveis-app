@@ -120,14 +120,83 @@ Altere `ADMIN_PASSWORD` no `.env` antes do primeiro deploy em produção.
 - Frontend testado (login admin, dashboard KPIs, gráficos, sidebar, portal do cliente).
 - Relatórios em `/app/test_reports/iteration_*.json`.
 
-## 🚀 Deploy
+## 🚀 Deploy no Vercel (100% compatível)
 
-1. Provisione MongoDB (Atlas ou self-hosted).
-2. Defina todas as variáveis em `backend/.env` — especialmente `JWT_SECRET`, `ADMIN_PASSWORD`, `FRONTEND_URL`, `CORS_ORIGINS`.
-3. Deploy do backend em qualquer host que rode Uvicorn (Fly.io, Railway, Render, VPS com supervisor).
-4. Build do frontend: `cd frontend && yarn build` → sirva `frontend/build/` em CDN/Vercel/Netlify apontando `REACT_APP_BACKEND_URL` para a API.
-5. Configure HTTPS em ambos (obrigatório porque os cookies usam `SameSite=none; Secure`).
+O projeto está pré-configurado para rodar em um único deployment Vercel: frontend React + backend FastAPI serverless + roteamento SPA.
+
+### Pré-requisitos
+- Conta Vercel (gratuita serve para começar)
+- MongoDB **hospedado** — recomendo **MongoDB Atlas** gratuito (free tier M0). Vercel é serverless e **não pode rodar MongoDB localmente**.
+
+### Passo a passo
+
+**1. Crie o cluster MongoDB Atlas**
+- Acesse https://cloud.mongodb.com → "Build a Database" → M0 Free → escolha região próxima
+- Em "Network Access" → "Add IP Address" → `0.0.0.0/0` (permite acesso serverless)
+- Em "Database Access" → crie um usuário com senha forte
+- Em "Connect" → "Drivers" → copie a connection string (algo como `mongodb+srv://user:pass@cluster.xxxxx.mongodb.net`)
+
+**2. Faça push do código para o GitHub**
+Use o botão **"Save to GitHub"** no topo do Emergent, OU manualmente:
+```bash
+git init
+git add .
+git commit -m "Lany Infláveis — initial"
+git remote add origin https://github.com/seu-usuario/lany-inflaveis.git
+git push -u origin main
+```
+
+**3. Importe no Vercel**
+- https://vercel.com/new → selecione o repositório
+- **Framework Preset:** `Other` (deixa o `vercel.json` cuidar do build)
+- **Build Command:** já configurado via `vercel.json` (não precisa mexer)
+- Antes de clicar "Deploy", vá em **"Environment Variables"** e adicione:
+
+| Nome | Valor | Observação |
+|---|---|---|
+| `MONGO_URL` | `mongodb+srv://user:pass@cluster...` | string do Atlas |
+| `DB_NAME` | `lany_inflaveis` | nome do banco |
+| `JWT_SECRET` | gere com `openssl rand -hex 32` | **nunca compartilhe** |
+| `ADMIN_EMAIL` | `admin@lanyinflaveis.com` | credencial inicial |
+| `ADMIN_PASSWORD` | senha forte | **mude antes de usar!** |
+| `FRONTEND_URL` | `https://seu-app.vercel.app` | URL do seu deployment |
+| `CORS_ORIGINS` | `https://seu-app.vercel.app` | mesmo valor acima |
+| `EMAIL_FROM_NAME` | `Lany Infláveis` | opcional |
+
+- Clique **"Deploy"**
+
+**4. Primeiro acesso**
+- Aguarde o build (~2min)
+- Acesse `https://seu-app.vercel.app`
+- Login admin: `ADMIN_EMAIL` / `ADMIN_PASSWORD` do passo 3
+- Os brinquedos demo e a empresa Lany Infláveis são criados automaticamente na primeira requisição
+
+### Arquitetura no Vercel
+- **`vercel.json`** — build do frontend + roteamento `/api/*` → função Python + fallback SPA
+- **`/api/index.py`** — adaptador ASGI que carrega o FastAPI (`backend/server.py`)
+- **`/requirements.txt`** — dependências Python mínimas para serverless (sem pandas/numpy/pytest)
+- **Frontend** com `REACT_APP_BACKEND_URL=""` → chamadas vão para `/api/...` no mesmo domínio (zero CORS)
+- **Seed idempotente** via middleware (não depende de startup contínuo)
+
+### Limitações do plano Hobby (grátis)
+- Cold start de ~1-2s na primeira requisição após inatividade
+- Função serverless tem timeout de 10s (basta para esta app)
+- 100GB de banda/mês
+
+Para alto volume, atualize para **Vercel Pro** (US$20/mês) — timeout 60s + mais invocações.
+
+---
+
+## 🐳 Deploy alternativo (VPS / Docker)
+
 
 ## 📜 Licença
 
 Uso interno da Lany Infláveis. Todos os direitos reservados.
+
+1. Provisione MongoDB (Atlas ou self-hosted).
+2. Defina todas as variáveis em `backend/.env`.
+3. Build do frontend: `cd frontend && yarn build`.
+4. Rode o backend com Uvicorn: `uvicorn server:app --host 0.0.0.0 --port 8001`.
+5. Sirva `frontend/build/` com Nginx apontando `/api/*` para o backend.
+6. Configure HTTPS em ambos (cookies usam `SameSite=none; Secure`).

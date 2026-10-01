@@ -872,15 +872,38 @@ async def delete_user(uid: str, user: dict = Depends(require_admin)):
     return {"ok": True}
 
 
-# ─────────────────────── STARTUP ───────────────────────
+# ─────────────────────── STARTUP (idempotent — safe for serverless cold starts) ───────────────────────
+_initialized = False
+
+
+async def _ensure_initialized():
+    """Lazy init called from a middleware so it works both for long-running
+    uvicorn (local/supervisor) and short-lived Vercel serverless invocations."""
+    global _initialized
+    if _initialized:
+        return
+    _initialized = True
+    try:
+        await db.users.create_index("email", unique=True)
+        await db.reservations.create_index([("start_datetime", 1), ("end_datetime", 1)])
+        await db.reservations.create_index("customer_id")
+        await db.toys.create_index("status")
+        await seed_all(db)
+        logger.info("Lany Infláveis API initialized")
+    except Exception as e:
+        logger.error(f"Init error (will retry on next request): {e}")
+        _initialized = False
+
+
+@app.middleware("http")
+async def init_once(request: Request, call_next):
+    await _ensure_initialized()
+    return await call_next(request)
+
+
 @app.on_event("startup")
 async def startup():
-    await db.users.create_index("email", unique=True)
-    await db.reservations.create_index([("start_datetime", 1), ("end_datetime", 1)])
-    await db.reservations.create_index("customer_id")
-    await db.toys.create_index("status")
-    await seed_all(db)
-    logger.info("Lany Infláveis API started")
+    await _ensure_initialized()
 
 
 @app.on_event("shutdown")
@@ -890,18 +913,22 @@ async def shutdown():
 
 app.include_router(api)
 
-# CORS
-frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
-origins = [frontend_url]
+# CORS — accept the frontend origin AND same-origin (empty FRONTEND_URL on Vercel is fine)
+frontend_url = os.environ.get("FRONTEND_URL", "").strip()
+origins = []
+if frontend_url:
+    origins.append(frontend_url)
 extra = os.environ.get("CORS_ORIGINS", "").split(",")
 for o in extra:
     o = o.strip()
     if o and o not in origins and o != "*":
         origins.append(o)
 
+# On Vercel the API is same-origin with the SPA, so an empty allowed-origins list
+# still works. For dev/preview we need the explicit origin.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=origins or ["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,0 +1,25 @@
+# ============================================
+# Vercel deploy — ignore files not needed in build
+# ============================================
+.git
+.gitignore
+.emergent
+memory
+tests
+test_reports
+test_result.md
+scripts
+design_guidelines.json
+auth_testing.md
+
+# Local Python
+backend/__pycache__
+backend/.env
+backend/.env.example
+**/__pycache__
+**/*.pyc
+
+# Local supervisor / dev
+.yarnrc
+
+# Keep: backend/, frontend/, api/, requirements.txt, vercel.json, README.md
