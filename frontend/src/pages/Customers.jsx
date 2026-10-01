@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,8 +17,8 @@ export default function Customers() {
   const [form, setForm] = useState(empty);
   const [editing, setEditing] = useState(null);
 
-  async function load() { const { data } = await api.get(`/customers${q ? "?q=" + encodeURIComponent(q) : ""}`); setItems(data); }
-  useEffect(() => { load(); }, [q]);
+  const load = useCallback(async () => { const { data } = await api.get(`/customers${q ? "?q=" + encodeURIComponent(q) : ""}`); setItems(data); }, [q]);
+  useEffect(() => { load(); }, [load]);
 
   async function save() {
     try {
