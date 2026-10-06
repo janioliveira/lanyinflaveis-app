@@ -1,0 +1,6 @@
+{
+  "name": "lanyinflaveis-root",
+  "scripts": {
+    "build": "cd frontend && yarn install && yarn build"
+  }
+}
