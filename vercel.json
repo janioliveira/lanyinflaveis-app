@@ -1,21 +1,21 @@
 {
   "builds": [
     {
-      "src": "backend/server.py",
+      "src": "lanyinflaveis-app-main/backend/server.py",
       "use": "@vercel/python"
     },
     {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "frontend/build"
+        "distDir": "lanyinflaveis-app-main/frontend/build"
       }
     }
   ],
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/backend/server.py"
+      "destination": "/lanyinflaveis-app-main/backend/server.py"
     },
     {
       "source": "/(.*)",
