@@ -4,12 +4,10 @@ from datetime import datetime, timezone
 from google.cloud.firestore_v1.base_query import FieldFilter
 from auth import hash_password, verify_password
 
-
 async def seed_admin(db):
     email = os.environ.get("ADMIN_EMAIL", "admin@lanyinflaveis.com")
     password = os.environ.get("ADMIN_PASSWORD", "Admin@123")
     
-    # Verifica se já existe um admin com esse e-mail
     docs = db.collection("users").where(filter=FieldFilter("email", "==", email)).limit(1).stream()
     existing_user = None
     async for doc in docs:
@@ -30,7 +28,6 @@ async def seed_admin(db):
             await db.collection("users").document(existing_user.id).update({
                 "password_hash": hash_password(password)
             })
-
 
 async def seed_company(db):
     docs = db.collection("company").limit(1).stream()
@@ -60,9 +57,7 @@ async def seed_company(db):
             "updated_at": datetime.now(timezone.utc).isoformat(),
         })
 
-
 async def seed_toys(db):
-    # Verifica se já existem brinquedos cadastrados
     count = 0
     async for _ in db.collection("toys").limit(1).stream():
         count += 1
@@ -123,11 +118,10 @@ async def seed_toys(db):
         t["created_at"] = now
         t["updated_at"] = now
         t["deleted"] = False
-        new_ref = toys_ref.document() # Cria a referência sem salvar ainda
+        new_ref = toys_ref.document()
         batch.set(new_ref, t)
         
     await batch.commit()
-
 
 async def seed_contract_template(db):
     docs = db.collection("contract_templates").where(filter=FieldFilter("is_default", "==", True)).limit(1).stream()
@@ -136,3 +130,53 @@ async def seed_contract_template(db):
         existing = doc
         
     if existing:
+        return
+        
+    template = """CONTRATO DE LOCAÇÃO DE BRINQUEDOS INFLÁVEIS
+
+LOCADORA: Lany Infláveis
+LOCATÁRIO: {NOME_CLIENTE}
+CPF/CNPJ: {CPF_CLIENTE}
+ENDEREÇO: {ENDERECO_CLIENTE}
+
+DATA DO EVENTO: {DATA_EVENTO}
+HORÁRIO: {HORARIO_INICIO} às {HORARIO_FIM}
+LOCAL: {LOCAL_EVENTO}
+
+BRINQUEDO(S): {BRINQUEDO}
+VALOR TOTAL: R$ {VALOR_TOTAL}
+VALOR PAGO: R$ {VALOR_PAGO}
+VALOR RESTANTE: R$ {VALOR_RESTANTE}
+FORMA DE PAGAMENTO: {FORMA_PAGAMENTO}
+
+CLÁUSULAS:
+
+1. OBJETO — A LOCADORA cede em locação ao LOCATÁRIO os brinquedos/equipamentos descritos acima, pelo período contratado.
+2. RESPONSABILIDADES DO LOCATÁRIO — Fornecer local adequado, seguro e nivelado; disponibilizar tomada elétrica quando necessário; supervisionar as crianças durante o uso.
+3. RESPONSABILIDADES DA LOCADORA — Entregar, montar, desmontar e retirar o equipamento em bom estado de funcionamento.
+4. DANOS AO EQUIPAMENTO — Danos causados por mau uso são de responsabilidade do LOCATÁRIO, que deverá arcar com os custos de reparo ou substituição.
+5. CANCELAMENTO — Cancelamentos com menos de 48h de antecedência não têm direito à devolução do sinal.
+6. CONDIÇÕES CLIMÁTICAS — Em caso de chuva forte, o evento poderá ser remarcado sem custo adicional.
+7. SEGURANÇA — É obrigatória a presença de um adulto responsável durante todo o uso dos equipamentos.
+8. FORO — Fica eleito o foro da comarca da LOCADORA para dirimir qualquer questão oriunda deste contrato.
+
+Data do contrato: {DATA_CONTRATO}
+
+_______________________________
+LOCADORA — Lany Infláveis
+
+_______________________________
+LOCATÁRIO — {NOME_CLIENTE}
+"""
+    await db.collection("contract_templates").add({
+        "nome": "Contrato Padrão",
+        "conteudo": template,
+        "is_default": True,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+async def seed_all(db):
+    await seed_admin(db)
+    await seed_company(db)
+    await seed_toys(db)
+    await seed_contract_template(db)
