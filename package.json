@@ -1,6 +1,6 @@
 {
   "name": "lanyinflaveis-root",
   "scripts": {
-    "build": "cd frontend && yarn install && yarn build"
+    "build": "cd frontend && npm install && CI=false npm run build"
   }
 }
