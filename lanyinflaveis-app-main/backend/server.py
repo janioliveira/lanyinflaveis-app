@@ -34,13 +34,27 @@ logger = logging.getLogger(__name__)
 # ─────────────────────── DB CONFIGURATION ───────────────────────
 # Inicializa o Firebase Admin SDK
 # Recomenda-se definir a variável GOOGLE_APPLICATION_CREDENTIALS apontando para o arquivo .json
+import os
+import json
+import firebase_admin
+from firebase_admin import credentials, firestore
+
+# Busca a chave nas variáveis do Vercel
+firebase_env = os.environ.get("FIREBASE_CREDENTIALS")
+
+if firebase_env:
+    # Modo Produção (Vercel)
+    cert_dict = json.loads(firebase_env)
+    cred = credentials.Certificate(cert_dict)
+else:
+    # Modo Local (seu computador)
+    cred = credentials.Certificate("chave-firebase.json")
+
+# Evita erro de inicialização duplicada no Vercel
 if not firebase_admin._apps:
-    cred_path = os.environ.get("FIREBASE_CREDENTIALS_PATH", "chave-firebase.json")
-    if os.path.exists(cred_path):
-        cred = credentials.Certificate(cred_path)
-        firebase_admin.initialize_app(cred)
-    else:
-        firebase_admin.initialize_app() # Assume ambiente GCP ou GOOGLE_APPLICATION_CREDENTIALS
+    firebase_admin.initialize_app(cred)
+
+db = firestore.AsyncClient() # ou firestore.client(), dependendo de como você estava usando
 
 # Cliente Assíncrono do Firestore
 db = firestore_async.client()
