@@ -1,0 +1,118 @@
+{
+  "theme": "light",
+  "typography": {
+    "headings": {
+      "family": "Fredoka One, Fredoka, sans-serif",
+      "weights": ["600", "700"],
+      "description": "Bubbly, bold, playful but highly readable. Perfect for a children's party aesthetic. Used for Hero headings, Section titles, and prominent numbers in KPIs."
+    },
+    "body": {
+      "family": "Nunito, Quicksand, sans-serif",
+      "weights": ["400", "500", "600", "700"],
+      "description": "Rounded, approachable sans-serif font that pairs well with Fredoka but scales down excellently for dense UI (tables, calendars, form inputs)."
+    },
+    "rules": [
+      "DO NOT use Inter, Roboto, or Open Sans anywhere.",
+      "Headlines (Size > 32px) MUST use tracking-tight.",
+      "Never center-align long dense text; stick to left alignment for readability.",
+      "Dashboard: Maximum text size text-3xl for headers to maintain data density."
+    ]
+  },
+  "colors": {
+    "primary": {
+      "hex": "#FF6B35",
+      "tailwind": "orange-500",
+      "description": "Vibrant Energy Orange. Used for primary CTAs (Book Now, Login, Primary actions)."
+    },
+    "secondary": {
+      "hex": "#FF4785",
+      "tailwind": "pink-500",
+      "description": "Bubblegum Pink. Used for secondary accents, playful highlights, status tags (e.g., Pending), and 'New/Hot' tags."
+    },
+    "tertiary": {
+      "hex": "#004E98",
+      "tailwind": "blue-700",
+      "description": "Deep Professional Blue. Used for the Admin dashboard sidebar, text-heavy contrast, and trust-building components (contracts/payments)."
+    },
+    "background": {
+      "public": "#FFF9F5",
+      "dashboard": "#F8FAFC",
+      "description": "Warm off-white for the public site to feel inviting. Cool slate-50 for dashboard to feel professional and clean."
+    },
+    "rules": [
+      "Avoid purple-on-white AI slop combinations completely.",
+      "Never use pure transparent backgrounds on overlays or headers (use bg-white/80 with backdrop-blur-xl).",
+      "Always set hover text color explicitly (e.g., hover:bg-orange-600 hover:text-white)."
+    ]
+  },
+  "visual_enhancers": {
+    "corners": "Extensively use rounded-2xl or rounded-3xl for cards/images to mimic the soft, inflated look of bounce houses.",
+    "shadows": "Soft, diffused drop shadows (shadow-lg shadow-orange-500/10) rather than harsh gray shadows.",
+    "borders": "Use subtle 1px borders (border-orange-100 or border-blue-100) to define edges in the dashboard."
+  },
+  "layouts": {
+    "public_portal": {
+      "hero": "Asymmetric bento grid featuring a large image of a bounce house on one side, and highly contrasting playful text on the other. Use wide margins (px-6 md:px-12).",
+      "catalog": "Generous spacing (gap-8). Cards should be highly visual, allocating 70% height to the image and 30% to the details/CTA.",
+      "spacing_scale": "p-8, p-12, p-16 to give the design 'breathing room'."
+    },
+    "dashboard": {
+      "structure": "Sidebar navigation (Blue base, white text) with a dense, white-background main content area.",
+      "spacing_scale": "Tighter (p-4, p-6). Data density is important here.",
+      "grids": "Use grid-cols-1 md:grid-cols-2 lg:grid-cols-4 for KPI cards."
+    }
+  },
+  "component_guidelines": {
+    "buttons": "Pill-shaped (rounded-full). Must include micro-interactions (e.g., hover:-translate-y-1 hover:shadow-md transition-transform duration-200).",
+    "cards": "Cardless style for dashboard tables. For public portal, soft rounded cards (rounded-3xl) with subtle border.",
+    "calendar": "Color-coded events (Pink = Pending, Blue = Confirmed, Orange = In Progress). Use shadcn calendar but override standard square corners to rounded-xl.",
+    "forms": "Inputs must have rounded-xl borders, focus:ring-2 focus:ring-orange-400. Soft grey placeholder text.",
+    "tables": "Dashboard tables should have generous padding inside cells (p-4), subtle border-b for rows, no outer card wrap."
+  },
+  "motion": [
+    "Hover states: Elevate elements lightly (-translate-y-1).",
+    "Transitions: specifically transition-transform, transition-colors duration-200.",
+    "Page Loads: Staggered fade-in-up for lists (toys catalog)."
+  ],
+  "accessibility": [
+    "Test all text for WCAG AA contrast (e.g., white text on the bright orange might need an orange-600 shade).",
+    "All interactive elements MUST include data-testid attribute based on their role.",
+    "Provide clear focus rings on all inputs/buttons."
+  ],
+  "image_urls": [
+    {
+      "url": "https://images.pexels.com/photos/16138038/pexels-photo-16138038.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Vibrant Disney Princess-themed bouncy castle set up outdoors",
+      "category": "hero_primary"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1765947389722-2e96d8c0aad9?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDN8MHwxfHNlYXJjaHw0fHxib3VuY2UlMjBob3VzZXxlbnwwfHx8fDE3OTAxODc3NzB8MA&ixlib=rb-4.1.0&q=85",
+      "description": "A red inflatable castle bounce house on a grassy lawn",
+      "category": "catalog_toy_1"
+    },
+    {
+      "url": "https://images.pexels.com/photos/10032947/pexels-photo-10032947.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Children celebrating outdoor party",
+      "category": "marketing_lifestyle"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1632163570616-8699e344f486?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDN8MHwxfHNlYXJjaHwyfHx0cmFtcG9saW5lfGVufDB8fHx8MTc5MDE4Nzc3MHww&ixlib=rb-4.1.0&q=85",
+      "description": "Kids playing on trampoline",
+      "category": "catalog_toy_2"
+    }
+  ],
+  "universal_guidelines_for_main_agent": [
+    "Do not center align text by default (no .App { text-align: center; }).",
+    "Do not apply `transition: all`.",
+    "Do not use transparent backgrounds behind text or in headers.",
+    "Always apply data-testid to critical interactive elements.",
+    "Use Phosphor icons or Lucide icons, DO NOT use emojis as icons.",
+    "Ensure dark text is used against light backgrounds, never assume inherited colors."
+  ],
+  "libraries": {
+    "icons": "lucide-react",
+    "charts": "recharts",
+    "motion": "framer-motion",
+    "date": "date-fns"
+  }
+}
